@@ -8,7 +8,7 @@ import {
 // --- CẤU HÌNH HỆ THỐNG ---
 const GRADES = ["Khối 10", "Khối 11", "Khối 12"];
 const PROGRAMS = ["Cánh Diều", "Kết nối tri thức", "Chân trời sáng tạo"];
-const apiKey = ""; 
+const apiKey = "AIzaSyxxxxxxx";
 const SYSTEM_INSTRUCTION = `Bạn là Trợ lý ảo GDQP&AN. Chỉ trả lời kiến thức quốc phòng Việt Nam. Từ chối nội dung nhạy cảm, phản động.`;
 
 const App = () => {
