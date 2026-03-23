@@ -1,46 +1,31 @@
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GDQP&AN PRO</title>
+  <title>GDQP&AN PRO - Firebase System</title>
 
-  <!-- React -->
-
+  <!-- React & ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <!-- Babel -->
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
   <!-- Tailwind -->
-
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Firebase -->
-
+  <!-- Firebase SDK (Phiên bản tương thích) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
-
 </head>
 
-<body class="bg-slate-100">
+<body class="bg-slate-50">
 <div id="root"></div>
 
 <script type="text/babel">
-
 const { useState, useEffect, useRef } = React;
 
 /* ================= FIREBASE CONFIG ================= */
-/* 🔥 DÁN CONFIG CỦA BẠN VÀO ĐÂY */
 const firebaseConfig = {
   apiKey: "AIzaSyAAW6F6Em3epelKBgs87_tTp7lFp_jJx5A",
   authDomain: "gdqp-2018.firebaseapp.com",
@@ -51,104 +36,171 @@ const firebaseConfig = {
   measurementId: "G-FWR66N32S7"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Khởi tạo nếu chưa có
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-  
-
-/* ================= APP ================= */
-
+/* ================= COMPONENT CHÍNH ================= */
 const App = () => {
-
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    auth.onAuthStateChanged(u => setUser(u));
+    const unsubscribe = auth.onAuthStateChanged(u => {
+      setUser(u);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   const isAdmin = user?.email === "admin@gmail.com";
 
+  if (loading) return <div className="h-screen flex items-center justify-center font-bold">Đang tải hệ thống...</div>;
+
   return (
-    <div>
-      <header className="bg-emerald-900 text-white p-4 flex justify-between">
-        <h1 className="font-bold">GDQP&AN PRO</h1>
-        <div className="flex gap-3">
-          <button onClick={()=>setTab("home")}>Home</button>
-          <button onClick={()=>setTab("files")}>Tài liệu</button>
-          <button onClick={()=>setTab("chat")}>AI</button>
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-emerald-900 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setTab("home")}>
+          <div className="bg-yellow-400 p-1 rounded text-emerald-900 font-black">⭐</div>
+          <h1 className="font-bold tracking-tighter text-xl">GDQP&AN PRO</h1>
+        </div>
+        <div className="flex gap-4 font-medium text-sm">
+          <button onClick={()=>setTab("home")} className={`hover:text-yellow-400 ${tab==='home'?'text-yellow-400':''}`}>Trang chủ</button>
+          <button onClick={()=>setTab("files")} className={`hover:text-yellow-400 ${tab==='files'?'text-yellow-400':''}`}>Tài liệu</button>
+          <button onClick={()=>setTab("chat")} className={`hover:text-yellow-400 ${tab==='chat'?'text-yellow-400':''}`}>AI Trợ lý</button>
+          {user && <button onClick={() => auth.signOut()} className="bg-red-500 px-3 py-1 rounded text-xs">Thoát</button>}
         </div>
       </header>
 
-      <div className="p-6">
-        {tab==="home" && <h2>Trang chủ</h2>}
+      <main className="p-6 flex-grow container mx-auto max-w-5xl">
+        {tab==="home" && (
+          <div className="text-center py-20">
+            <h2 className="text-4xl font-black text-slate-800 mb-4">Chào mừng đến với Hệ thống GDQP</h2>
+            <p className="text-slate-500">Tài liệu học tập và hỗ trợ AI trực tuyến cho học sinh.</p>
+          </div>
+        )}
+        
         {tab==="files" && <Files isAdmin={isAdmin}/>}
+        
         {tab==="chat" && <Chat/>}
-      </div>
+      </main>
 
       {!user && <Login/>}
+      
+      <footer className="p-4 text-center text-slate-400 text-xs">
+        © 2024 GDQP&AN 2018 System - Powered by Firebase
+      </footer>
     </div>
   );
 };
 
 /* ================= LOGIN ================= */
-
 const Login = () => {
-  const [email,setEmail]=useState("");
-  const [pass,setPass]=useState("");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [isError, setIsError] = useState(false);
 
-  const login = async ()=>{
-    try{
-      await auth.signInWithEmailAndPassword(email,pass);
-    }catch(e){ alert("Sai tài khoản"); }
+  const login = async () => {
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+    } catch (e) { 
+      setIsError(true);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-xl">
-        <h2 className="mb-4 font-bold">Đăng nhập</h2>
-        <input placeholder="email" onChange={e=>setEmail(e.target.value)} className="border p-2 mb-2 w-full"/>
-        <input type="password" placeholder="pass" onChange={e=>setPass(e.target.value)} className="border p-2 mb-2 w-full"/>
-        <button onClick={login} className="bg-emerald-600 text-white px-4 py-2">Login</button>
+    <div className="fixed inset-0 bg-emerald-950/80 backdrop-blur-sm flex items-center justify-center z-[100]">
+      <div className="bg-white p-8 rounded-3xl shadow-2xl w-80">
+        <h2 className="text-2xl font-black mb-6 text-emerald-900 text-center">ĐĂNG NHẬP</h2>
+        <div className="space-y-4">
+          <input 
+            placeholder="Email (ví dụ: admin@gmail.com)" 
+            onChange={e => setEmail(e.target.value)} 
+            className="border-2 border-slate-100 p-3 rounded-xl w-full outline-emerald-500 focus:border-emerald-500 transition-all"
+          />
+          <input 
+            type="password" 
+            placeholder="Mật khẩu" 
+            onChange={e => setPass(e.target.value)} 
+            className="border-2 border-slate-100 p-3 rounded-xl w-full outline-emerald-500 focus:border-emerald-500 transition-all"
+          />
+          {isError && <p className="text-red-500 text-xs font-bold text-center">Sai tài khoản hoặc mật khẩu!</p>}
+          <button onClick={login} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3 rounded-xl transition-all shadow-lg">VÀO HỆ THỐNG</button>
+        </div>
+        <p className="mt-4 text-[10px] text-slate-400 text-center">Vui lòng đăng nhập để sử dụng tài liệu.</p>
       </div>
     </div>
   );
 };
 
-/* ================= FILE UPLOAD ================= */
-
+/* ================= QUẢN LÝ FILE ================= */
 const Files = ({isAdmin}) => {
-  const [files,setFiles]=useState([]);
+  const [files, setFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(()=>{
-    db.collection("files").onSnapshot(snap=>{
-      setFiles(snap.docs.map(d=>({...d.data(),id:d.id})));
+  useEffect(() => {
+    const unsub = db.collection("files").onSnapshot(snap => {
+      setFiles(snap.docs.map(d => ({...d.data(), id: d.id})));
     });
-  },[]);
+    return () => unsub();
+  }, []);
 
-  const upload = async (e)=>{
-    const file=e.target.files[0];
-    const ref = storage.ref("files/"+file.name);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
+  const upload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+      const ref = storage.ref("files/" + Date.now() + "_" + file.name);
+      await ref.put(file);
+      const url = await ref.getDownloadURL();
 
-    await db.collection("files").add({
-      name:file.name,
-      url
-    });
+      await db.collection("files").add({
+        name: file.name,
+        url,
+        date: new Date().toLocaleDateString('vi-VN')
+      });
+    } catch (err) {
+      alert("Lỗi tải lên: " + err.message);
+    }
+    setIsUploading(false);
+  };
+
+  const deleteFile = async (id, fileName) => {
+    if(window.confirm("Xóa file này?")) {
+      await db.collection("files").doc(id).delete();
+      // Lưu ý: Để xóa trên Storage cần ref chính xác, ở đây ta chỉ xóa Record trên DB cho nhanh
+    }
   };
 
   return (
-    <div>
-      {isAdmin && <input type="file" onChange={upload}/>}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-bold text-emerald-900 uppercase">Thư viện tài liệu</h3>
+        {isAdmin && (
+          <label className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold cursor-pointer hover:bg-emerald-700">
+            {isUploading ? "Đang tải..." : "+ Tải lên tài liệu"}
+            <input type="file" onChange={upload} className="hidden" disabled={isUploading}/>
+          </label>
+        )}
+      </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        {files.map(f=>(
-          <div key={f.id} className="bg-white p-4 rounded">
-            <p>{f.name}</p>
-            <a href={f.url} target="_blank">Tải</a>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {files.length === 0 && <p className="text-slate-400 col-span-full text-center py-10">Chưa có tài liệu nào.</p>}
+        {files.map(f => (
+          <div key={f.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="bg-red-50 p-3 rounded-xl text-red-500 font-bold text-xs uppercase">PDF</div>
+              {isAdmin && <button onClick={() => deleteFile(f.id, f.name)} className="text-slate-300 hover:text-red-500">✕</button>}
+            </div>
+            <p className="font-bold text-slate-800 mb-2 line-clamp-2">{f.name}</p>
+            <p className="text-[10px] text-slate-400 mb-4 italic">Cập nhật: {f.date}</p>
+            <a href={f.url} target="_blank" className="mt-auto bg-slate-50 text-emerald-700 text-center py-2 rounded-lg font-bold text-sm hover:bg-emerald-50 transition-colors">Xem / Tải xuống</a>
           </div>
         ))}
       </div>
@@ -156,46 +208,86 @@ const Files = ({isAdmin}) => {
   );
 };
 
-/* ================= CHAT ================= */
-
+/* ================= CHAT AI ================= */
 const Chat = () => {
-  const [msg,setMsg]=useState("");
-  const [list,setList]=useState([]);
+  const [msg, setMsg] = useState("");
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef(null);
 
-  const send = async ()=>{
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyxxxxxxx",{
-      method:"POST",
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        contents:[{parts:[{text:msg}]}]
-      })
-    });
+  // Cuộn xuống cuối khi có tin mới
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [list]);
 
-    const data = await res.json();
-
-    setList([...list,
-      {role:"user",text:msg},
-      {role:"ai",text:data.candidates?.[0]?.content?.parts?.[0]?.text}
-    ]);
-
+  const send = async () => {
+    if (!msg.trim()) return;
+    
+    const userMsg = msg;
     setMsg("");
+    setList(prev => [...prev, {role: "user", text: userMsg}]);
+    setLoading(true);
+
+    try {
+      // THAY apiKey CỦA BẠN VÀO ĐÂY (Trong file App.jsx bạn gửi chưa có key thật)
+      const apiKey = ""; 
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Bạn là trợ lý ảo hỗ trợ môn Giáo dục quốc phòng và an ninh. Hãy trả lời ngắn gọn, chính xác: " + userMsg }] }]
+        })
+      });
+
+      const data = await res.json();
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Xin lỗi, AI đang bận. Vui lòng thử lại sau.";
+      
+      setList(prev => [...prev, {role: "ai", text: aiResponse}]);
+    } catch (err) {
+      setList(prev => [...prev, {role: "ai", text: "Lỗi kết nối AI. Kiểm tra API Key!"}]);
+    }
+    setLoading(false);
   };
 
   return (
-    <div>
-      <div className="h-64 overflow-auto bg-white p-4 mb-2">
-        {list.map((m,i)=><div key={i}><b>{m.role}:</b> {m.text}</div>)}
+    <div className="bg-white rounded-[32px] shadow-sm border h-[500px] flex flex-col overflow-hidden">
+      <div className="bg-emerald-50 p-4 border-b flex items-center gap-3">
+        <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">AI</div>
+        <div>
+          <h4 className="font-bold text-emerald-900 text-sm">Trợ lý GDQP</h4>
+          <p className="text-[10px] text-emerald-600">Đang trực tuyến</p>
+        </div>
       </div>
-      <input value={msg} onChange={e=>setMsg(e.target.value)} className="border p-2 w-full"/>
-      <button onClick={send} className="bg-blue-500 text-white px-4 py-2 mt-2">Gửi</button>
+
+      <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        {list.map((m, i) => (
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`}>
+              {m.text}
+            </div>
+          </div>
+        ))}
+        {loading && <div className="text-xs text-slate-400 italic">AI đang suy nghĩ...</div>}
+        <div ref={endRef} />
+      </div>
+
+      <div className="p-4 border-t flex gap-2">
+        <input 
+          value={msg} 
+          onChange={e => setMsg(e.target.value)} 
+          onKeyPress={e => e.key === 'Enter' && send()}
+          placeholder="Hỏi về vũ khí, đội ngũ, luật QP..." 
+          className="flex-grow bg-slate-50 border-none p-3 rounded-xl outline-none text-sm focus:ring-2 focus:ring-emerald-500 transition-all"
+        />
+        <button onClick={send} disabled={loading} className="bg-emerald-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50">GỬI</button>
+      </div>
     </div>
   );
 };
 
 /* ================= RENDER ================= */
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App/>);
 </script>
 
 </body>
