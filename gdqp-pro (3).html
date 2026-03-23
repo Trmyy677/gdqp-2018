@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GDQP-AN — Nền tảng huấn luyện số</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,900&family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --e950:#022c22;--e900:#064e3b;--e700:#047857;--e600:#059669;--e400:#34d399;--e100:#d1fae5;--e50:#ecfdf5;
+  --s900:#0f172a;--s800:#1e293b;--s600:#475569;--s500:#64748b;--s400:#94a3b8;--s300:#cbd5e1;--s200:#e2e8f0;--s100:#f1f5f9;--s50:#f8fafc;
+  --amber:#fbbf24;--red:#ef4444;--blue:#2563eb;--blue50:#eff6ff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--s50);color:var(--s900);min-height:100vh}
+svg{display:inline-block;vertical-align:middle;flex-shrink:0}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--s200);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 36px}
+.logo{display:flex;align-items:center;gap:12px;cursor:pointer}
+.logo-icon{background:var(--e700);padding:8px;border-radius:12px;color:#fff;box-shadow:0 4px 16px rgba(4,120,87,.2);display:flex}
+.logo-text{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:22px;color:var(--e900);text-transform:uppercase}
+nav{display:flex;gap:4px;background:var(--s100);padding:4px;border-radius:18px}
+nav button{padding:8px 16px;border-radius:14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;border:none;cursor:pointer;transition:all .2s;color:var(--s500);background:transparent;font-family:'Be Vietnam Pro',sans-serif}
+nav button.active{background:#fff;color:var(--e700);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+nav button:hover:not(.active){color:var(--e600)}
+.admin-btn{padding:8px 14px;border-radius:12px;font-size:9px;font-weight:800;text-transform:uppercase;border:2px solid var(--s200);background:var(--s50);color:var(--s400);cursor:pointer;transition:all .2s;font-family:'Be Vietnam Pro',sans-serif}
+.admin-btn.on{background:var(--amber);border-color:#fde68a;color:#78350f}
+
+/* MAIN */
+main{max-width:1200px;margin:0 auto;padding:36px}
+.view{display:none;animation:fadeUp .35s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* HOME */
+.hero{padding:72px 0;text-align:center}
+.badge{display:inline-block;padding:4px 16px;background:var(--e100);color:var(--e900);border-radius:999px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;margin-bottom:22px}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:clamp(50px,10vw,94px);line-height:.9;letter-spacing:-2px;color:var(--s900);margin-bottom:22px}
+.hero-title span{color:var(--e700)}
+.hero-sub{color:var(--s400);font-weight:700;font-size:14px;max-width:500px;margin:0 auto 44px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;max-width:960px;margin:0 auto}
+.fcard{background:#fff;padding:34px;border-radius:38px;border:1px solid var(--s100);cursor:pointer;transition:all .3s;text-align:center}
+.fcard:hover{box-shadow:0 20px 60px rgba(0,0,0,.11);transform:translateY(-4px)}
+.fcard:hover .ci-e{background:var(--e600);color:#fff}
+.fcard:hover .ci-a{background:#d97706;color:#fff}
+.fcard:hover .ci-b{background:var(--blue);color:#fff}
+.fcard:hover .ci-s{background:var(--s900);color:#fff}
+.cicon{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;transition:all .3s}
+.ci-e{background:var(--e50);color:var(--e600)}
+.ci-a{background:#fffbeb;color:#d97706}
+.ci-b{background:var(--blue50);color:var(--blue)}
+.ci-s{background:var(--s50);color:var(--s600)}
+.ctitle{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.15em;color:var(--s800);margin-bottom:5px}
+.cdesc{font-size:11px;color:var(--s400);font-weight:700;line-height:1.6}
+
+/* FILTER BAR */
+.filter-bar{background:#fff;padding:16px 20px;border-radius:28px;border:1px solid var(--s100);display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+.flabel{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--s400);display:flex;align-items:center;gap:5px}
+.fsel{background:var(--s50);padding:8px 12px;border-radius:10px;font-weight:700;font-size:12px;border:1.5px solid transparent;outline:none;font-family:'Be Vietnam Pro',sans-serif;cursor:pointer;transition:border-color .2s}
+.fsel:focus{border-color:var(--e400)}
+.upload-zone{margin-left:auto;display:none;align-items:center;gap:8px;background:var(--e50);padding:7px 11px 7px 14px;border-radius:18px;border:1px solid var(--e100);flex-wrap:wrap}
+.upload-zone.show{display:flex}
+.uzlabel{font-size:9px;font-weight:800;text-transform:uppercase;color:#065f46;white-space:nowrap}
+.upload-zone .fsel{background:#fff;padding:6px 9px;border-radius:9px;font-size:10px;border:1px solid var(--e100)}
+.upbtn{background:var(--e700);color:#fff;padding:7px 13px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:5px;border:none;font-family:'Be Vietnam Pro',sans-serif;white-space:nowrap;transition:background .2s}
+.upbtn:hover{background:var(--e900)}
+
+/* DOCS GRID */
+.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.doc-card{background:#fff;padding:28px;border-radius:32px;border:1px solid var(--s100);position:relative;transition:border-color .2s;overflow:hidden}
+.doc-card:hover{border-color:#a7f3d0}
+.doc-card:hover .dicon{background:var(--e700);color:#fff}
+.dicon{background:var(--e50);color:var(--e700);width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;transition:all .3s}
+.dtitle{font-weight:800;color:var(--s800);margin-bottom:12px;line-height:1.4;font-size:14px;min-height:38px}
+.dtags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.tag{padding:3px 9px;border-radius:999px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.tg{background:var(--s100);color:var(--s500)}
+.tp{background:var(--e100);color:var(--e700)}
+.tu{background:var(--blue50);color:var(--blue)}
+.dactions{display:flex;gap:7px}
+.btn-view{flex:1;background:var(--s900);color:#fff;padding:10px;border-radius:13px;border:none;font-size:10px;font-weight:800;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .2s;font-family:'Be Vietnam Pro',sans-serif}
+.btn-view:hover{background:var(--e700)}
+.btn-down{background:var(--e50);color:var(--e700);padding:10px 12px;border-radius:13px;border:none;cursor:pointer;display:flex;align-items:center;transition:background .2s}
+.btn-down:hover{background:var(--e100)}
+.btn-del{position:absolute;top:24px;right:24px;background:none;border:none;cursor:pointer;color:var(--s200);transition:color .2s}
+.btn-del:hover{color:var(--red)}
+.empty-state{text-align:center;padding:72px 0;color:var(--s300);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3em;grid-column:1/-1}
+
+/* ADD DOC MODAL */
+.modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex;animation:fadeUp .25s ease}
+.modal-box{background:#fff;width:100%;border-radius:32px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(0,0,0,.3)}
+
+/* PREVIEW */
+.preview-box{max-width:1000px;height:90vh}
+.prev-header{padding:16px 24px;border-bottom:1px solid var(--s100);background:var(--s50);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.prev-info{display:flex;align-items:center;gap:11px}
+.prev-info-icon{background:var(--e100);color:var(--e700);padding:8px;border-radius:10px;display:flex}
+.prev-title{font-weight:800;color:var(--s800);font-size:13px;text-transform:uppercase}
+.prev-meta{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:var(--s400);margin-top:2px}
+.prev-actions{display:flex;gap:7px}
+.btn-pdl{background:var(--e700);color:#fff;padding:8px 14px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:10px;font-weight:800;font-family:'Be Vietnam Pro',sans-serif;transition:background .2s}
+.btn-pdl:hover{background:var(--e900)}
+.btn-pclose{background:#fff;color:var(--s400);padding:8px;border-radius:10px;border:1px solid var(--s200);cursor:pointer;display:flex;transition:all .2s}
+.btn-pclose:hover{color:var(--s800)}
+.prev-body{flex:1;overflow:hidden;background:var(--s200)}
+.prev-body iframe{width:100%;height:100%;border:none}
+.prev-unsupported{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--s400);font-weight:700;gap:10px;font-size:13px}
+
+/* ADD URL FORM */
+.add-form-box{max-width:520px;padding:36px}
+.add-form-box h3{font-weight:800;font-size:18px;margin-bottom:22px;color:var(--s900)}
+.form-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--s500);display:block;margin-bottom:6px}
+.form-inp{width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--s200);outline:none;font-size:13px;font-family:'Be Vietnam Pro',sans-serif;font-weight:600;margin-bottom:14px;transition:border-color .2s}
+.form-inp:focus{border-color:var(--e400)}
+.form-row{display:flex;gap:10px;margin-bottom:14px}
+.form-row .fsel{flex:1}
+.form-btns{display:flex;gap:10px;margin-top:6px}
+.btn-cancel{flex:1;padding:12px;border-radius:12px;background:var(--s100);color:var(--s600);border:none;font-size:11px;font-weight:800;text-transform:uppercase;cursor:pointer;font-family:'Be Vietnam Pro',sans-serif}
+.btn-save{flex:1;padding:12px;border-radius:12px;background:var(--e700);color:#fff;border:none;font-size:11px;font-weight:800;text-transform:uppercase;cursor:pointer;font-family:'Be Vietnam Pro',sans-serif;transition:background .2s}
+.btn-save:hover{background:var(--e900)}
+
+/* PRACTICE */
+.practice-header{display:flex;flex-direction:column;gap:18px;border-bottom:1px solid var(--s200);padding-bottom:28px;margin-bottom:28px}
+@media(min-width:640px){.practice-header{flex-direction:row;align-items:flex-end;justify-content:space-between}}
+.practice-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:40px;text-transform:uppercase;line-height:1}
+.practice-title span{color:var(--e700)}
+.practice-sub{color:var(--s400);font-weight:700;font-size:13px;margin-top:5px}
+.grade-tabs{display:flex;background:var(--s100);padding:4px;border-radius:16px;gap:3px;flex-shrink:0}
+.grade-tab{padding:8px 18px;border-radius:12px;font-size:10px;font-weight:800;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s;color:var(--s400);background:transparent;font-family:'Be Vietnam Pro',sans-serif}
+.grade-tab.active{background:#fff;color:var(--e700);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.practice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.pcard{background:#fff;padding:28px;border-radius:38px;border:1px solid var(--s100);display:flex;flex-direction:column;justify-content:space-between;transition:all .3s}
+.pcard:hover{box-shadow:0 20px 50px rgba(0,0,0,.09);border-color:var(--e100)}
+.pcard-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.ptype{background:var(--e50);color:var(--e700);padding:3px 11px;border-radius:999px;font-size:9px;font-weight:800;text-transform:uppercase}
+.pcard-icon{color:var(--s100)}
+.pcard:hover .pcard-icon{color:var(--e100)}
+.ptitle{font-size:16px;font-weight:800;color:var(--s900);margin-bottom:7px;line-height:1.3}
+.pdesc{font-size:11px;color:var(--s400);font-weight:700;line-height:1.6;margin-bottom:18px}
+.btn-play{width:100%;background:var(--s900);color:#fff;padding:13px;border-radius:18px;border:none;font-size:10px;font-weight:800;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;font-family:'Be Vietnam Pro',sans-serif}
+.btn-play:hover{background:var(--e700)}
+.btn-play:active{transform:scale(.97)}
+.yt-input-row{display:flex;gap:8px;margin-top:10px}
+.yt-inp{flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#fff;font-size:11px;font-family:'Be Vietnam Pro',sans-serif;font-weight:600;outline:none;transition:border-color .2s}
+.yt-inp::placeholder{color:rgba(255,255,255,.3)}
+.yt-inp:focus{border-color:var(--e400)}
+.btn-yt{background:var(--e700);color:#fff;padding:8px 14px;border-radius:10px;border:none;cursor:pointer;font-size:10px;font-weight:800;font-family:'Be Vietnam Pro',sans-serif;white-space:nowrap;transition:background .2s}
+.btn-yt:hover{background:var(--e600)}
+
+/* VIDEO PANEL */
+.video-panel{background:var(--e950);border-radius:32px;padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.06);margin-top:28px;display:none}
+.video-panel.show{display:block}
+.video-panel-header{padding:18px 22px;display:flex;justify-content:space-between;align-items:center}
+.vp-title{color:#fff;font-weight:800;font-size:14px;text-transform:uppercase}
+.vp-grade{font-size:9px;font-weight:800;color:var(--e400);text-transform:uppercase;letter-spacing:.15em}
+.btn-vpclose{background:rgba(255,255,255,.08);color:#fff;border:none;padding:7px;border-radius:8px;cursor:pointer;display:flex;transition:background .2s}
+.btn-vpclose:hover{background:rgba(239,68,68,.6)}
+.yt-frame-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden}
+.yt-frame-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+.yt-url-form{padding:16px 22px 20px;display:flex;gap:8px;align-items:center;border-top:1px solid rgba(255,255,255,.06)}
+.yt-url-lbl{font-size:9px;font-weight:800;color:rgba(255,255,255,.4);text-transform:uppercase;white-space:nowrap}
+
+/* CHAT */
+.chat-wrap{max-width:860px;margin:0 auto;background:#fff;border-radius:44px;box-shadow:0 24px 80px rgba(0,0,0,.1);height:700px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--s100)}
+.chat-head{background:var(--e900);padding:24px 28px;color:#fff;display:flex;align-items:center;gap:13px}
+.chat-head-icon{background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.25);padding:10px;border-radius:14px;display:flex}
+.chat-htitle{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:19px;letter-spacing:.05em;text-transform:uppercase}
+.chat-status{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:var(--e400);display:flex;align-items:center;gap:5px;margin-top:2px}
+.pdot{width:7px;height:7px;border-radius:50%;background:var(--e400);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.chat-msgs{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;background:#f8fafc}
+.chat-msgs::-webkit-scrollbar{width:4px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--s200);border-radius:4px}
+.mrow{display:flex}
+.mrow.user{justify-content:flex-end}
+.mbubble{max-width:85%;padding:14px 18px;border-radius:24px;font-size:13px;font-weight:600;line-height:1.65;box-shadow:0 2px 8px rgba(0,0,0,.06);white-space:pre-wrap}
+.mbubble.user{background:var(--e700);color:#fff;border-bottom-right-radius:5px}
+.mbubble.model{background:#fff;color:var(--s800);border:1px solid var(--s100);border-bottom-left-radius:5px}
+.mbubble.loading{color:var(--s400);font-style:italic}
+.chat-form{padding:16px 20px;background:#fff;border-top:1px solid var(--s100);display:flex;gap:10px;align-items:center}
+.chat-inp{flex:1;padding:14px 18px;background:var(--s100);border-radius:999px;border:2px solid transparent;outline:none;font-size:13px;font-weight:600;font-family:'Be Vietnam Pro',sans-serif;transition:border-color .2s}
+.chat-inp:focus{border-color:var(--e400);background:#fff}
+.send-btn{width:52px;height:52px;border-radius:999px;background:var(--e950);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 16px rgba(2,44,34,.3);transition:background .2s}
+.send-btn:hover{background:var(--e900)}
+.send-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* FEEDBACK */
+.fb-grid{display:grid;grid-template-columns:2fr 3fr;gap:34px}
+.fb-panel{background:var(--e900);padding:42px;border-radius:44px;color:#fff;box-shadow:0 20px 60px rgba(6,78,59,.3);height:fit-content}
+.fb-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:38px;line-height:1;text-transform:uppercase;margin-bottom:13px}
+.fb-title span{color:var(--e400)}
+.fb-sub{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;color:rgba(167,243,208,.35);margin-bottom:24px;line-height:1.8}
+.fb-ta{width:100%;height:145px;background:rgba(255,255,255,.07);border-radius:20px;padding:16px;border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-weight:600;font-family:'Be Vietnam Pro',sans-serif;resize:none;outline:none;margin-bottom:16px;transition:border-color .2s}
+.fb-ta::placeholder{color:rgba(6,78,59,.6)}
+.fb-ta:focus{border-color:var(--e400)}
+.fb-submit{width:100%;padding:15px;background:#fff;color:var(--e950);border:none;border-radius:16px;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.2em;font-family:'Be Vietnam Pro',sans-serif;transition:background .2s}
+.fb-submit:hover{background:var(--e50)}
+.fb-list{display:flex;flex-direction:column;gap:13px;max-height:620px;overflow-y:auto;padding-right:3px}
+.fb-list::-webkit-scrollbar{width:4px}
+.fb-list::-webkit-scrollbar-thumb{background:var(--s200);border-radius:4px}
+.fb-card{background:#fff;padding:24px 28px;border-radius:32px;border:1px solid var(--s100);position:relative;transition:border-color .2s}
+.fb-card:hover{border-color:var(--e100)}
+.fb-text{font-size:13px;font-weight:600;color:var(--s800);line-height:1.6;font-style:italic}
+.fb-meta{margin-top:13px;display:flex;justify-content:space-between;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--s300)}
+
+/* MOBILE */
+.mob-nav{display:none}
+@media(max-width:768px){
+  header{padding:0 12px}
+  main{padding:16px 12px 78px}
+  nav{display:none}
+  .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid var(--s200);padding:5px 0 7px}
+  .mob-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;border:none;background:none;cursor:pointer;font-size:8px;font-weight:800;text-transform:uppercase;color:var(--s400);font-family:'Be Vietnam Pro',sans-serif;transition:color .2s}
+  .mob-nav button.active{color:var(--e700)}
+  .fb-grid{grid-template-columns:1fr}
+  .chat-wrap{height:calc(100vh - 168px);border-radius:24px}
+  .preview-box{height:93vh;border-radius:20px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logoBtn">
+    <div class="logo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg></div>
+    <span class="logo-text">GDQP-AN</span>
+  </div>
+  <nav>
+    <button class="active" data-tab="home">Trang chủ</button>
+    <button data-tab="docs">Tài liệu</button>
+    <button data-tab="practice">Thực hành</button>
+    <button data-tab="chat">Trợ lý AI</button>
+    <button data-tab="feedback">Góp ý</button>
+  </nav>
+  <button class="admin-btn" id="adminBtn">HỌC VIÊN</button>
+</header>
+
+<main>
+  <!-- HOME -->
+  <div id="view-home" class="view active">
+    <div class="hero">
+      <span class="badge">Nền tảng huấn luyện số 2026</span>
+      <h1 class="hero-title">HỌC TẬP <br/><span>VÌ TỔ QUỐC.</span></h1>
+      <p class="hero-sub">Hệ thống kho liệu tích hợp Trình phát động tác ảo và Trợ lý AI chuyên sâu GDQP&amp;AN.</p>
+      <div class="cards-grid">
+        <div class="fcard" data-goto="docs"><div class="cicon ci-e"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><h3 class="ctitle">Tài liệu</h3><p class="cdesc">Bài giảng &amp; Liên kết tài nguyên</p></div>
+        <div class="fcard" data-goto="practice"><div class="cicon ci-a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><h3 class="ctitle">Thực hành</h3><p class="cdesc">Xem video động tác theo khối</p></div>
+        <div class="fcard" data-goto="chat"><div class="cicon ci-b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><path d="M12 5V3"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3 class="ctitle">Trợ lý AI</h3><p class="cdesc">Giải đáp kiến thức 24/7</p></div>
+        <div class="fcard" data-goto="feedback"><div class="cicon ci-s"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/></svg></div><h3 class="ctitle">Góp ý</h3><p class="cdesc">Gửi báo cáo chất lượng</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCS -->
+  <div id="view-docs" class="view">
+    <div class="filter-bar">
+      <span class="flabel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Lọc:</span>
+      <select class="fsel" id="fGrade"><option>Tất cả khối</option><option>Khối 10</option><option>Khối 11</option><option>Khối 12</option></select>
+      <select class="fsel" id="fProg"><option>Tất cả bộ sách</option><option>Cánh Diều</option><option>Kết nối tri thức</option><option>Chân trời sáng tạo</option></select>
+      <!-- Admin: upload file hoặc thêm URL -->
+      <div class="upload-zone" id="uploadZone">
+        <span class="uzlabel">Thêm cho:</span>
+        <select class="fsel" id="uGrade"><option>Khối 10</option><option>Khối 11</option><option>Khối 12</option></select>
+        <select class="fsel" id="uProg"><option>Cánh Diều</option><option>Kết nối tri thức</option><option>Chân trời sáng tạo</option></select>
+        <label class="upbtn">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload File
+          <input type="file" id="fileInput" style="display:none"/>
+        </label>
+        <button class="upbtn" id="addUrlBtn" style="background:var(--blue)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Thêm URL
+        </button>
+      </div>
+    </div>
+    <div class="docs-grid" id="docsGrid"></div>
+  </div>
+
+  <!-- PRACTICE -->
+  <div id="view-practice" class="view">
+    <div class="practice-header">
+      <div>
+        <h2 class="practice-title">Thực hành <span>Động tác.</span></h2>
+        <p class="practice-sub">Xem video hướng dẫn kỹ thuật, điều lệnh theo chương trình chuẩn 2018.</p>
+      </div>
+      <div class="grade-tabs" id="gradeTabs">
+        <button class="grade-tab active" data-grade="Khối 10">Khối 10</button>
+        <button class="grade-tab" data-grade="Khối 11">Khối 11</button>
+        <button class="grade-tab" data-grade="Khối 12">Khối 12</button>
+      </div>
+    </div>
+    <div class="practice-grid" id="practiceGrid"></div>
+    <!-- Video Panel -->
+    <div class="video-panel" id="videoPanel">
+      <div class="video-panel-header">
+        <div>
+          <div class="vp-grade" id="vpGrade">—</div>
+          <div class="vp-title" id="vpTitle">—</div>
+        </div>
+        <button class="btn-vpclose" id="vpClose"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="yt-frame-wrap" id="ytFrameWrap">
+        <!-- iframe injected here -->
+      </div>
+      <div class="yt-url-form" id="ytUrlForm" style="display:none">
+        <span class="yt-url-lbl">YouTube URL (Admin):</span>
+        <input class="yt-inp" id="ytUrlInp" placeholder="https://www.youtube.com/watch?v=..."/>
+        <button class="btn-yt" id="ytLoadBtn">Tải video</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="view-chat" class="view">
+    <div class="chat-wrap">
+      <div class="chat-head">
+        <div class="chat-head-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><path d="M12 5V3"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div>
+          <div class="chat-htitle">Cố vấn AI — GDQP</div>
+          <div class="chat-status"><span class="pdot"></span> Sẵn sàng — Không cần API Key</div>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="mrow model"><div class="mbubble model">Chào đồng chí! Tôi là cố vấn AI chuyên về Giáo dục Quốc phòng &amp; An ninh. Bạn cần hỏi về kiến thức quân sự nào?</div></div>
+      </div>
+      <div class="chat-form">
+        <input class="chat-inp" id="chatInp" type="text" placeholder="Hỏi về vũ khí, chiến thuật, điều lệnh..."/>
+        <button class="send-btn" id="sendBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div id="view-feedback" class="view">
+    <div class="fb-grid">
+      <div class="fb-panel">
+        <h2 class="fb-title">Góp ý <span>Xây dựng.</span></h2>
+        <p class="fb-sub">Đồng chí có ý tưởng gì để nâng cao chất lượng học tập?</p>
+        <textarea class="fb-ta" id="fbText" placeholder="Nhập ý kiến đóng góp..."></textarea>
+        <button class="fb-submit" id="fbSubmit">Gửi ý kiến</button>
+      </div>
+      <div class="fb-list" id="fbList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MOBILE NAV -->
+<div class="mob-nav">
+  <button data-tab="home" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Trang chủ</button>
+  <button data-tab="docs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Tài liệu</button>
+  <button data-tab="practice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Thực hành</button>
+  <button data-tab="chat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="10" x="3" y="11" rx="2"/><path d="M12 5V3"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>AI</button>
+  <button data-tab="feedback"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/></svg>Góp ý</button>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-bg" id="previewModal">
+  <div class="modal-box preview-box">
+    <div class="prev-header">
+      <div class="prev-info">
+        <div class="prev-info-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div><div class="prev-title" id="prevTitle">—</div><div class="prev-meta" id="prevMeta">—</div></div>
+      </div>
+      <div class="prev-actions">
+        <button class="btn-pdl" id="prevDlBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải xuống</button>
+        <button class="btn-pclose" id="prevCloseBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>
+    <div class="prev-body" id="prevBody"></div>
+  </div>
+</div>
+
+<!-- ADMIN PASSWORD MODAL -->
+<div class="modal-bg" id="adminPassModal">
+  <div class="modal-box" style="max-width:380px;padding:36px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+      <div style="background:var(--amber);padding:10px;border-radius:12px;display:flex">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:15px;color:var(--s900)">Xác thực Quản trị viên</div>
+        <div style="font-size:10px;font-weight:700;color:var(--s400);margin-top:2px">Nhập mật khẩu để tiếp tục</div>
+      </div>
+    </div>
+    <input class="form-inp" type="password" id="adminPassInp" placeholder="Mật khẩu admin..." style="margin-bottom:8px"/>
+    <div id="adminPassErr" style="display:none;color:var(--red);font-size:11px;font-weight:700;margin-bottom:10px">❌ Mật khẩu không đúng, thử lại!</div>
+    <div class="form-btns">
+      <button class="btn-cancel" id="adminPassCancel">Hủy</button>
+      <button class="btn-save" id="adminPassConfirm" style="background:var(--amber);color:#78350f">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD URL MODAL -->
+<div class="modal-bg" id="urlModal">
+  <div class="modal-box add-form-box">
+    <h3>🔗 Thêm tài liệu từ URL</h3>
+    <label class="form-label">Tiêu đề tài liệu</label>
+    <input class="form-inp" id="urlDocTitle" placeholder="VD: Bài 1 - Lịch sử truyền thống..."/>
+    <label class="form-label">Đường dẫn URL</label>
+    <input class="form-inp" id="urlDocUrl" placeholder="https://drive.google.com/... hoặc bất kỳ URL nào"/>
+    <label class="form-label">Loại liên kết</label>
+    <select class="form-inp fsel" id="urlDocType">
+      <option value="iframe">Nhúng iframe (Google Drive, PDF online...)</option>
+      <option value="link">Chỉ mở link (YouTube, trang web...)</option>
+    </select>
+    <div class="form-row">
+      <select class="fsel" id="urlDocGrade"><option>Khối 10</option><option>Khối 11</option><option>Khối 12</option></select>
+      <select class="fsel" id="urlDocProg"><option>Cánh Diều</option><option>Kết nối tri thức</option><option>Chân trời sáng tạo</option></select>
+    </div>
+    <div class="form-btns">
+      <button class="btn-cancel" id="urlCancelBtn">Hủy</button>
+      <button class="btn-save" id="urlSaveBtn">Lưu tài liệu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ PRACTICE DATA ============
+const PRACTICE_DATA={
+  "Khối 10":[
+    {id:1,title:"Động tác Nghỉ, Nghiêm",type:"Điều lệnh",desc:"Căn bản về tư thế tác phong quân đội.",ytId:""},
+    {id:2,title:"Quay tại chỗ",type:"Điều lệnh",desc:"Quay trái, quay phải, quay đằng sau.",ytId:""},
+    {id:3,title:"Chào, thôi chào",type:"Điều lệnh",desc:"Chào khi có mũ và không có mũ.",ytId:""}
+  ],
+  "Khối 11":[
+    {id:4,title:"Tháo lắp súng tiểu liên AK",type:"Kỹ thuật",desc:"Các bước tháo lắp thông thường và lau chùi.",ytId:""},
+    {id:5,title:"Tư thế nằm bắn súng AK",type:"Kỹ thuật",desc:"Cách tì súng, nín thở và bóp cò.",ytId:""},
+    {id:6,title:"Băng bó vết thương",type:"Y tế",desc:"Kỹ thuật băng bó cơ bản trên chiến trường.",ytId:""}
+  ],
+  "Khối 12":[
+    {id:7,title:"Động tác đi khom, bò",type:"Chiến thuật",desc:"Vận động trên chiến trường có vật che khuất.",ytId:""},
+    {id:8,title:"Lăn, lê, bò, trườn",type:"Chiến thuật",desc:"Vượt qua các tầng hầm, rào gai thép.",ytId:""},
+    {id:9,title:"Ném lựu đạn bài 1",type:"Kỹ thuật",desc:"Đứng ném lựu đạn xa trúng đích.",ytId:""}
+  ]
+};
+
+// ============ STORAGE ============
+const SK={D:'gdqp_docs',F:'gdqp_fb',U:'gdqp_uid'};
+const getLS=k=>{try{return JSON.parse(localStorage.getItem(k))||[];}catch{return[];}};
+const setLS=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const uid=()=>{let u=localStorage.getItem(SK.U);if(!u){u='u_'+Math.random().toString(36).slice(2,10);localStorage.setItem(SK.U,u);}return u;};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ============ STATE ============
+let isAdmin=false, chatHistory=[], currentPreviewId=null, currentGrade='Khối 10', currentPracticeId=null;
+
+// ============ TABS ============
+function gotoTab(t){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+t).classList.add('active');
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  if(t==='docs') renderDocs();
+  if(t==='practice') renderPractice();
+  if(t==='feedback') renderFb();
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>gotoTab(b.dataset.tab)));
+document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>gotoTab(b.dataset.goto)));
+document.getElementById('logoBtn').addEventListener('click',()=>gotoTab('home'));
+
+// ============ ADMIN ============
+const ADMIN_PASS='gdqp2026'; // ← đổi mật khẩu tại đây
+
+document.getElementById('adminBtn').addEventListener('click',()=>{
+  if(isAdmin){
+    // Đang là admin → đăng xuất luôn
+    isAdmin=false;
+    const btn=document.getElementById('adminBtn');
+    btn.textContent='HỌC VIÊN'; btn.classList.remove('on');
+    document.getElementById('uploadZone').classList.remove('show');
+    document.getElementById('ytUrlForm').style.display='none';
+    renderDocs(); renderFb();
+    return;
+  }
+  // Chưa là admin → hiện popup nhập mật khẩu
+  document.getElementById('adminPassModal').classList.add('show');
+  document.getElementById('adminPassInp').value='';
+  document.getElementById('adminPassErr').style.display='none';
+  setTimeout(()=>document.getElementById('adminPassInp').focus(),100);
+});
+
+function tryAdminLogin(){
+  const val=document.getElementById('adminPassInp').value;
+  if(val===ADMIN_PASS){
+    isAdmin=true;
+    document.getElementById('adminBtn').textContent='ADMIN MODE';
+    document.getElementById('adminBtn').classList.add('on');
+    document.getElementById('uploadZone').classList.add('show');
+    document.getElementById('ytUrlForm').style.display='flex';
+    document.getElementById('adminPassModal').classList.remove('show');
+    renderDocs(); renderFb();
+  } else {
+    document.getElementById('adminPassErr').style.display='block';
+    document.getElementById('adminPassInp').select();
+  }
+}
+
+document.getElementById('adminPassConfirm').addEventListener('click', tryAdminLogin);
+document.getElementById('adminPassInp').addEventListener('keydown',e=>{ if(e.key==='Enter') tryAdminLogin(); });
+document.getElementById('adminPassCancel').addEventListener('click',()=>{
+  document.getElementById('adminPassModal').classList.remove('show');
+});
+document.getElementById('adminPassModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('adminPassModal')) document.getElementById('adminPassModal').classList.remove('show');
+});
+
+// ============ DOCS — FILE UPLOAD ============
+document.getElementById('fGrade').addEventListener('change',renderDocs);
+document.getElementById('fProg').addEventListener('change',renderDocs);
+
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file) return;
+  if(file.size>4.5*1024*1024){alert('File quá lớn (tối đa ~4.5MB).');e.target.value='';return;}
+  const r=new FileReader();
+  r.onload=()=>{
+    const docs=getLS(SK.D);
+    docs.unshift({id:'d'+Date.now(),title:file.name,fileName:file.name,fileType:file.type,
+      grade:document.getElementById('uGrade').value,
+      program:document.getElementById('uProg').value,
+      content:r.result,docType:'file',createdAt:new Date().toISOString()});
+    try{setLS(SK.D,docs);renderDocs();}
+    catch{alert('File quá lớn cho localStorage. Hãy dùng URL thay thế.');}
+    e.target.value='';
+  };
+  r.readAsDataURL(file);
+});
+
+// ============ DOCS — ADD URL ============
+document.getElementById('addUrlBtn').addEventListener('click',()=>{
+  document.getElementById('urlModal').classList.add('show');
+});
+document.getElementById('urlCancelBtn').addEventListener('click',()=>{
+  document.getElementById('urlModal').classList.remove('show');
+});
+document.getElementById('urlSaveBtn').addEventListener('click',()=>{
+  const title=document.getElementById('urlDocTitle').value.trim();
+  const url=document.getElementById('urlDocUrl').value.trim();
+  if(!title||!url){alert('Vui lòng nhập đủ tiêu đề và URL!');return;}
+  const docs=getLS(SK.D);
+  docs.unshift({id:'d'+Date.now(),title,url,
+    urlType:document.getElementById('urlDocType').value,
+    grade:document.getElementById('urlDocGrade').value,
+    program:document.getElementById('urlDocProg').value,
+    docType:'url',createdAt:new Date().toISOString()});
+  setLS(SK.D,docs);
+  document.getElementById('urlModal').classList.remove('show');
+  document.getElementById('urlDocTitle').value='';
+  document.getElementById('urlDocUrl').value='';
+  renderDocs();
+});
+document.getElementById('urlModal').addEventListener('click',e=>{if(e.target===document.getElementById('urlModal'))document.getElementById('urlModal').classList.remove('show');});
+
+// ============ RENDER DOCS ============
+function renderDocs(){
+  const g=document.getElementById('fGrade').value;
+  const p=document.getElementById('fProg').value;
+  const docs=getLS(SK.D).filter(d=>(g==='Tất cả khối'||d.grade===g)&&(p==='Tất cả bộ sách'||d.program===p));
+  const grid=document.getElementById('docsGrid');
+  if(!docs.length){grid.innerHTML='<div class="empty-state">Không tìm thấy tài liệu phù hợp</div>';return;}
+  grid.innerHTML=docs.map(d=>{
+    const isUrl=d.docType==='url';
+    const typeTag=isUrl?`<span class="tag tu">🔗 URL</span>`:'';
+    const actionBtns=isUrl
+      ? `<button class="btn-view" data-action="preview" data-id="${d.id}">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+           ${d.urlType==='link'?'Mở link':'Xem nhúng'}
+         </button>`
+      : `<button class="btn-view" data-action="preview" data-id="${d.id}">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+           Xem trước
+         </button>
+         <button class="btn-down" data-action="download" data-id="${d.id}" title="Tải xuống">
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+         </button>`;
+    return `<div class="doc-card">
+      <div class="dicon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div class="dtitle">${esc(d.title)}</div>
+      <div class="dtags"><span class="tag tg">${esc(d.grade)}</span><span class="tag tp">${esc(d.program)}</span>${typeTag}</div>
+      <div class="dactions">${actionBtns}</div>
+      ${isAdmin?`<button class="btn-del" data-action="delete" data-id="${d.id}" title="Xóa">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </button>`:''}
+    </div>`;
+  }).join('');
+}
+
+// Event delegation docs
+document.getElementById('docsGrid').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-action]'); if(!btn) return;
+  const id=btn.dataset.id, action=btn.dataset.action;
+  if(action==='preview') openPreview(id);
+  if(action==='download') downloadDoc(id);
+  if(action==='delete'){
+    if(!confirm('Xóa tài liệu này?')) return;
+    setLS(SK.D,getLS(SK.D).filter(d=>d.id!==id));
+    renderDocs();
+  }
+});
+
+function downloadDoc(id){
+  const d=getLS(SK.D).find(x=>x.id===id);
+  if(!d?.content){alert('Không có dữ liệu file để tải.');return;}
+  const a=document.createElement('a');
+  a.href=d.content; a.download=d.fileName||d.title;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ============ PREVIEW ============
+function openPreview(id){
+  const d=getLS(SK.D).find(x=>x.id===id); if(!d) return;
+
+  // URL type = link → open in new tab
+  if(d.docType==='url' && d.urlType==='link'){
+    window.open(d.url,'_blank'); return;
+  }
+
+  currentPreviewId=id;
+  document.getElementById('prevTitle').textContent=d.title;
+  document.getElementById('prevMeta').textContent=`${d.grade} • ${d.program}`;
+  document.getElementById('prevDlBtn').style.display=d.docType==='url'?'none':'flex';
+
+  const body=document.getElementById('prevBody');
+  if(d.docType==='url'){
+    // iframe embed — convert Google Drive share link if needed
+    let src=d.url;
+    if(src.includes('drive.google.com/file/d/')){
+      const m=src.match(/\/d\/([^/]+)/);
+      if(m) src=`https://drive.google.com/file/d/${m[1]}/preview`;
+    } else if(src.includes('drive.google.com/open?id=')){
+      const m=src.match(/id=([^&]+)/);
+      if(m) src=`https://drive.google.com/file/d/${m[1]}/preview`;
+    }
+    body.innerHTML=`<iframe src="${esc(src)}" style="width:100%;height:100%;border:none" allowfullscreen title="Preview"></iframe>`;
+  } else if(d.fileType?.includes('pdf')){
+    body.innerHTML=`<iframe src="${d.content}" style="width:100%;height:100%;border:none" title="PDF"></iframe>`;
+  } else if(d.fileType?.includes('image')){
+    body.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;padding:20px"><img src="${esc(d.content)}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.15)"/></div>`;
+  } else {
+    body.innerHTML=`<div class="prev-unsupported"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><p>Định dạng này không xem trước được.</p><small>Bấm "Tải xuống" để xem nội dung đầy đủ.</small></div>`;
+  }
+  document.getElementById('previewModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+
+document.getElementById('prevCloseBtn').addEventListener('click',closePreview);
+document.getElementById('prevDlBtn').addEventListener('click',()=>{if(currentPreviewId) downloadDoc(currentPreviewId);});
+document.getElementById('previewModal').addEventListener('click',e=>{if(e.target===document.getElementById('previewModal')) closePreview();});
+function closePreview(){
+  document.getElementById('previewModal').classList.remove('show');
+  document.getElementById('prevBody').innerHTML='';
+  document.body.style.overflow='';
+  currentPreviewId=null;
+}
+
+// ============ PRACTICE ============
+document.getElementById('gradeTabs').addEventListener('click',e=>{
+  const btn=e.target.closest('.grade-tab'); if(!btn) return;
+  currentGrade=btn.dataset.grade;
+  document.querySelectorAll('.grade-tab').forEach(b=>b.classList.toggle('active',b===btn));
+  renderPractice();
+  document.getElementById('videoPanel').classList.remove('show');
+});
+
+function renderPractice(){
+  const items=PRACTICE_DATA[currentGrade]||[];
+  document.getElementById('practiceGrid').innerHTML=items.map(item=>`
+    <div class="pcard">
+      <div>
+        <div class="pcard-row">
+          <span class="ptype">${esc(item.type)}</span>
+          <span class="pcard-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+        </div>
+        <div class="ptitle">${esc(item.title)}</div>
+        <div class="pdesc">${esc(item.desc)}</div>
+      </div>
+      <button class="btn-play" data-practice-id="${item.id}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Xem video hướng dẫn
+      </button>
+    </div>`).join('');
+}
+
+document.getElementById('practiceGrid').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-practice-id]'); if(!btn) return;
+  const id=parseInt(btn.dataset.practiceId);
+  const all=Object.values(PRACTICE_DATA).flat();
+  const item=all.find(x=>x.id===id); if(!item) return;
+  currentPracticeId=id;
+  document.getElementById('vpTitle').textContent=item.title;
+  document.getElementById('vpGrade').textContent=currentGrade+' · '+item.type;
+
+  // Load saved YT URL if exists
+  const savedUrl=localStorage.getItem('gdqp_yt_'+id)||'';
+  if(savedUrl){
+    const embed=ytEmbedUrl(savedUrl);
+    document.getElementById('ytFrameWrap').innerHTML=embed
+      ?`<iframe src="${esc(embed)}" style="width:100%;aspect-ratio:16/9;border:none" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>`
+      :`<iframe src="${esc(savedUrl)}" style="width:100%;aspect-ratio:16/9;border:none" allowfullscreen allow="autoplay"></iframe>`;
+    document.getElementById('ytUrlInp').value=savedUrl;
+  } else {
+    document.getElementById('ytFrameWrap').innerHTML=`
+      <div style="aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;color:rgba(255,255,255,.4);gap:10px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <p style="font-size:12px;font-weight:700;text-align:center;padding:0 20px">${isAdmin?`Dán link YouTube để phát "<strong style="color:#fff">${esc(item.title)}</strong>"`:'Video chưa được cài đặt. Liên hệ Admin để thêm video.'}</p>
+      </div>`;
+    document.getElementById('ytUrlInp').value='';
+  }
+  document.getElementById('videoPanel').classList.add('show');
+  setTimeout(()=>document.getElementById('videoPanel').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+});
+
+document.getElementById('vpClose').addEventListener('click',()=>{
+  document.getElementById('videoPanel').classList.remove('show');
+  document.getElementById('ytFrameWrap').innerHTML='';
+});
+
+// Parse YouTube URL → embed URL
+function ytEmbedUrl(url){
+  url=url.trim();
+  let vid='';
+  const patterns=[
+    /youtu\.be\/([^?&\s]+)/,
+    /[?&]v=([^&\s]+)/,
+    /embed\/([^?&\s]+)/,
+    /shorts\/([^?&\s]+)/
+  ];
+  for(const p of patterns){const m=url.match(p);if(m){vid=m[1];break;}}
+  return vid?`https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0&modestbranding=1`:'';'';
+}
+
+document.getElementById('ytLoadBtn').addEventListener('click',loadYtVideo);
+document.getElementById('ytUrlInp').addEventListener('keydown',e=>{if(e.key==='Enter') loadYtVideo();});
+
+function loadYtVideo(){
+  const url=document.getElementById('ytUrlInp').value.trim();
+  if(!url) return;
+  const embed=ytEmbedUrl(url);
+  if(!embed){
+    document.getElementById('ytFrameWrap').innerHTML=`<iframe src="${esc(url)}" style="width:100%;aspect-ratio:16/9;border:none" allowfullscreen allow="autoplay"></iframe>`;
+  } else {
+    document.getElementById('ytFrameWrap').innerHTML=`<iframe src="${esc(embed)}" style="width:100%;aspect-ratio:16/9;border:none" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>`;
+  }
+  // Lưu lại để học viên xem
+  if(currentPracticeId) localStorage.setItem('gdqp_yt_'+currentPracticeId, url);
+}
+
+// ============ CHAT — dùng Anthropic API ============
+document.getElementById('sendBtn').addEventListener('click',sendChat);
+document.getElementById('chatInp').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey) sendChat();});
+
+async function sendChat(){
+  const inp=document.getElementById('chatInp');
+  const msg=inp.value.trim(); if(!msg) return;
+  inp.value='';
+  inp.disabled=true;
+  document.getElementById('sendBtn').disabled=true;
+
+  addMsg('user',msg);
+  chatHistory.push({role:'user',content:msg});
+
+  const loadId='load_'+Date.now();
+  addMsg('model','Đang phân tích...', loadId, true);
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'anthropic-version':'2023-06-01',
+        'anthropic-beta':'claude-ai-artifact'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1024,
+        system:'Bạn là chuyên gia Giáo dục Quốc phòng & An ninh Việt Nam. Trả lời chuẩn mực, ngắn gọn, dùng thuật ngữ quân sự chính xác, bằng tiếng Việt.',
+        messages:chatHistory
+      })
+    });
+    const data=await res.json();
+    if(data.error){
+      replaceMsg(loadId,'⚠️ Lỗi: '+data.error.message);
+    } else {
+      const reply=data.content?.[0]?.text||'Không nhận được phản hồi.';
+      chatHistory.push({role:'assistant',content:reply});
+      replaceMsg(loadId,reply);
+    }
+  }catch(err){
+    replaceMsg(loadId,'Lỗi kết nối. Hãy kiểm tra mạng và thử lại.');
+  }
+  inp.disabled=false;
+  document.getElementById('sendBtn').disabled=false;
+  inp.focus();
+}
+
+function addMsg(role,text,id,isLoading){
+  const box=document.getElementById('chatMsgs');
+  const d=document.createElement('div');
+  d.className='mrow '+role;
+  if(id) d.dataset.msgId=id;
+  d.innerHTML=`<div class="mbubble ${role}${isLoading?' loading':''}">${esc(text)}</div>`;
+  box.appendChild(d);
+  box.scrollTop=box.scrollHeight;
+}
+
+function replaceMsg(id,text){
+  const el=document.querySelector(`[data-msg-id="${id}"] .mbubble`);
+  if(el){el.textContent=text;el.classList.remove('loading');}
+  document.getElementById('chatMsgs').scrollTop=9999;
+}
+
+// ============ FEEDBACK ============
+document.getElementById('fbSubmit').addEventListener('click',()=>{
+  const t=document.getElementById('fbText').value.trim();
+  if(!t){alert('Vui lòng nhập nội dung góp ý!');return;}
+  const fbs=getLS(SK.F);
+  fbs.push({id:'f'+Date.now(),text:t,userId:uid(),createdAt:new Date().toISOString()});
+  setLS(SK.F,fbs);
+  document.getElementById('fbText').value='';
+  renderFb();
+});
+
+function renderFb(){
+  const list=document.getElementById('fbList');
+  const fbs=getLS(SK.F).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  if(!fbs.length){list.innerHTML='<div class="empty-state">Chưa có dữ liệu phản hồi</div>';return;}
+  list.innerHTML=fbs.map(f=>`
+    <div class="fb-card">
+      <p class="fb-text">"${esc(f.text)}"</p>
+      <div class="fb-meta">
+        <span>Mã SV: ${esc(f.userId.slice(0,8))}</span>
+        <span>${new Date(f.createdAt).toLocaleDateString('vi-VN')}</span>
+      </div>
+      ${isAdmin?`<button class="btn-del" data-fb-id="${f.id}" style="position:absolute;top:20px;right:20px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </button>`:''}
+    </div>`).join('');
+}
+
+document.getElementById('fbList').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-fb-id]'); if(!btn) return;
+  if(!confirm('Xóa góp ý này?')) return;
+  setLS(SK.F,getLS(SK.F).filter(f=>f.id!==btn.dataset.fbId));
+  renderFb();
+});
+
+// ============ INIT ============
+renderDocs();
+renderPractice();
+</script>
+</body>
+</html>
