@@ -27,7 +27,7 @@ const { useState, useEffect, useRef } = React;
 
 /* ================= FIREBASE CONFIG ================= */
 const firebaseConfig = {
-  apiKey: "AIzaSyAAW6F6Em3epelKBgs87_tTp7lFp_jJx5A",
+  apiKey: "AIzaSyCv-1rm83gEJWR5k0KGSmm__yjRjpdkFwg",
   authDomain: "gdqp-2018.firebaseapp.com",
   projectId: "gdqp-2018",
   storageBucket: "gdqp-2018.firebasestorage.app",
@@ -36,7 +36,6 @@ const firebaseConfig = {
   measurementId: "G-FWR66N32S7"
 };
 
-// Khởi tạo nếu chưa có
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -47,12 +46,14 @@ const storage = firebase.storage();
 /* ================= COMPONENT CHÍNH ================= */
 const App = () => {
   const [user, setUser] = useState(null);
+  const [isGuest, setIsGuest] = useState(false); // Chế độ khách
   const [tab, setTab] = useState("home");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(u => {
       setUser(u);
+      if (u) setIsGuest(false); // Nếu đã đăng nhập thì tắt chế độ khách
       setLoading(false);
     });
     return () => unsubscribe();
@@ -61,6 +62,11 @@ const App = () => {
   const isAdmin = user?.email === "khai.anh1505rm@gmail.com";
 
   if (loading) return <div className="h-screen flex items-center justify-center font-bold">Đang tải hệ thống...</div>;
+
+  // Nếu chưa đăng nhập và chưa chọn chế độ khách thì hiện màn hình Login
+  if (!user && !isGuest) {
+    return <Login onGuest={() => setIsGuest(true)} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,34 +79,36 @@ const App = () => {
           <button onClick={()=>setTab("home")} className={`hover:text-yellow-400 ${tab==='home'?'text-yellow-400':''}`}>Trang chủ</button>
           <button onClick={()=>setTab("files")} className={`hover:text-yellow-400 ${tab==='files'?'text-yellow-400':''}`}>Tài liệu</button>
           <button onClick={()=>setTab("chat")} className={`hover:text-yellow-400 ${tab==='chat'?'text-yellow-400':''}`}>AI Trợ lý</button>
-          {user && <button onClick={() => auth.signOut()} className="bg-red-500 px-3 py-1 rounded text-xs">Thoát</button>}
+          {user ? (
+            <button onClick={() => auth.signOut()} className="bg-red-500 px-3 py-1 rounded text-xs">Thoát ({user.email.split('@')[0]})</button>
+          ) : (
+            <button onClick={() => setIsGuest(false)} className="bg-blue-500 px-3 py-1 rounded text-xs">Đăng nhập</button>
+          )}
         </div>
       </header>
 
       <main className="p-6 flex-grow container mx-auto max-w-5xl">
         {tab==="home" && (
           <div className="text-center py-20">
-            <h2 className="text-4xl font-black text-slate-800 mb-4">Chào mừng đến với Hệ thống GDQP</h2>
-            <p className="text-slate-500">Tài liệu học tập và hỗ trợ AI trực tuyến cho học sinh.</p>
+            <h2 className="text-4xl font-black text-slate-800 mb-4">Hệ thống GDQP 2018</h2>
+            <p className="text-slate-500">Học trực tuyến - Tra cứu AI - Quản lý tài liệu bài giảng.</p>
+            {isGuest && <p className="mt-4 text-emerald-600 font-bold bg-emerald-50 inline-block px-4 py-1 rounded-full text-xs">Bạn đang xem với tư cách Khách</p>}
           </div>
         )}
         
         {tab==="files" && <Files isAdmin={isAdmin}/>}
-        
         {tab==="chat" && <Chat/>}
       </main>
 
-      {!user && <Login/>}
-      
-      <footer className="p-4 text-center text-slate-400 text-xs">
+      <footer className="p-4 text-center text-slate-400 text-xs border-t bg-white">
         © 2024 GDQP&AN 2018 System - Powered by Firebase
       </footer>
     </div>
   );
 };
 
-/* ================= LOGIN ================= */
-const Login = () => {
+/* ================= LOGIN & GUEST ================= */
+const Login = ({ onGuest }) => {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [isError, setIsError] = useState(false);
@@ -114,25 +122,37 @@ const Login = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-emerald-950/80 backdrop-blur-sm flex items-center justify-center z-[100]">
-      <div className="bg-white p-8 rounded-3xl shadow-2xl w-80">
-        <h2 className="text-2xl font-black mb-6 text-emerald-900 text-center">ĐĂNG NHẬP</h2>
-        <div className="space-y-4">
+    <div className="fixed inset-0 bg-emerald-950 flex items-center justify-center z-[100] p-4">
+      <div className="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-sm">
+        <div className="text-center mb-8">
+            <div className="bg-emerald-100 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 text-3xl">🛡️</div>
+            <h2 className="text-2xl font-black text-emerald-900">XÁC THỰC</h2>
+            <p className="text-slate-400 text-sm">Vui lòng đăng nhập hoặc vào xem nhanh</p>
+        </div>
+        
+        <div className="space-y-3">
           <input 
-            placeholder="Email (ví dụ: admin@gmail.com)" 
+            placeholder="Email Admin" 
             onChange={e => setEmail(e.target.value)} 
-            className="border-2 border-slate-100 p-3 rounded-xl w-full outline-emerald-500 focus:border-emerald-500 transition-all"
+            className="border-2 border-slate-100 p-4 rounded-2xl w-full outline-emerald-500 transition-all text-sm"
           />
           <input 
             type="password" 
             placeholder="Mật khẩu" 
             onChange={e => setPass(e.target.value)} 
-            className="border-2 border-slate-100 p-3 rounded-xl w-full outline-emerald-500 focus:border-emerald-500 transition-all"
+            className="border-2 border-slate-100 p-4 rounded-2xl w-full outline-emerald-500 transition-all text-sm"
           />
-          {isError && <p className="text-red-500 text-xs font-bold text-center">Sai tài khoản hoặc mật khẩu!</p>}
-          <button onClick={login} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-3 rounded-xl transition-all shadow-lg">VÀO HỆ THỐNG</button>
+          {isError && <p className="text-red-500 text-[10px] font-bold text-center uppercase">Sai thông tin đăng nhập!</p>}
+          
+          <button onClick={login} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold w-full py-4 rounded-2xl transition-all shadow-lg mt-2">ĐĂNG NHẬP ADMIN</button>
+          
+          <div className="relative py-4">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+            <div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-slate-400">HOẶC</span></div>
+          </div>
+
+          <button onClick={onGuest} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold w-full py-4 rounded-2xl transition-all">VÀO CHẾ ĐỘ KHÁCH</button>
         </div>
-        <p className="mt-4 text-[10px] text-slate-400 text-center">Vui lòng đăng nhập để sử dụng tài liệu.</p>
       </div>
     </div>
   );
@@ -144,9 +164,9 @@ const Files = ({isAdmin}) => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    const unsub = db.collection("files").onSnapshot(snap => {
-      setFiles(snap.docs.map(d => ({...d.data(), id: d.id})));
-    });
+    const unsub = db.collection("files").orderBy("id", "desc").onSnapshot(snap => {
+      setFiles(snap.docs.map(d => ({...d.data(), docId: d.id})));
+    }, err => console.log("Lỗi tải file:", err));
     return () => unsub();
   }, []);
 
@@ -156,51 +176,54 @@ const Files = ({isAdmin}) => {
     
     setIsUploading(true);
     try {
-      const ref = storage.ref("files/" + Date.now() + "_" + file.name);
+      const fileName = Date.now() + "_" + file.name;
+      const ref = storage.ref("files/" + fileName);
       await ref.put(file);
       const url = await ref.getDownloadURL();
 
       await db.collection("files").add({
+        id: Date.now(),
         name: file.name,
-        url,
+        url: url,
         date: new Date().toLocaleDateString('vi-VN')
       });
+      alert("Tải lên thành công!");
     } catch (err) {
-      alert("Lỗi tải lên: " + err.message);
+      console.error(err);
+      alert("Lỗi: Bạn cần chỉnh Rules trong Firebase Console sang 'allow write' mới up được!");
     }
     setIsUploading(false);
   };
 
-  const deleteFile = async (id, fileName) => {
-    if(window.confirm("Xóa file này?")) {
-      await db.collection("files").doc(id).delete();
-      // Lưu ý: Để xóa trên Storage cần ref chính xác, ở đây ta chỉ xóa Record trên DB cho nhanh
+  const deleteFile = async (docId) => {
+    if(window.confirm("Xóa tài liệu này?")) {
+      await db.collection("files").doc(docId).delete();
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-xl font-bold text-emerald-900 uppercase">Thư viện tài liệu</h3>
+        <h3 className="text-xl font-bold text-emerald-900 uppercase">Thư viện bài giảng</h3>
         {isAdmin && (
-          <label className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold cursor-pointer hover:bg-emerald-700">
-            {isUploading ? "Đang tải..." : "+ Tải lên tài liệu"}
+          <label className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold cursor-pointer hover:bg-emerald-700 text-sm flex items-center gap-2 transition-all">
+             {isUploading ? "⏳ Đang tải..." : "📤 Tải lên PDF"}
             <input type="file" onChange={upload} className="hidden" disabled={isUploading}/>
           </label>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {files.length === 0 && <p className="text-slate-400 col-span-full text-center py-10">Chưa có tài liệu nào.</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {files.length === 0 && <p className="text-slate-400 col-span-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 italic text-sm">Chưa có tài liệu nào được đăng tải.</p>}
         {files.map(f => (
-          <div key={f.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
-            <div className="flex items-start justify-between mb-4">
-              <div className="bg-red-50 p-3 rounded-xl text-red-500 font-bold text-xs uppercase">PDF</div>
-              {isAdmin && <button onClick={() => deleteFile(f.id, f.name)} className="text-slate-300 hover:text-red-500">✕</button>}
+          <div key={f.docId} className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col hover:border-emerald-200 transition-all group">
+            <div className="flex justify-between items-start mb-4">
+               <div className="bg-emerald-50 text-emerald-600 w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs">DOC</div>
+               {isAdmin && <button onClick={() => deleteFile(f.docId)} className="text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">✕</button>}
             </div>
-            <p className="font-bold text-slate-800 mb-2 line-clamp-2">{f.name}</p>
-            <p className="text-[10px] text-slate-400 mb-4 italic">Cập nhật: {f.date}</p>
-            <a href={f.url} target="_blank" className="mt-auto bg-slate-50 text-emerald-700 text-center py-2 rounded-lg font-bold text-sm hover:bg-emerald-50 transition-colors">Xem / Tải xuống</a>
+            <p className="font-bold text-slate-800 mb-1 line-clamp-1 text-sm">{f.name}</p>
+            <p className="text-[10px] text-slate-400 mb-4 italic">Ngày: {f.date}</p>
+            <a href={f.url} target="_blank" className="mt-auto bg-slate-900 text-white text-center py-3 rounded-xl font-bold text-xs hover:bg-emerald-600 transition-colors shadow-sm">XEM TÀI LIỆU</a>
           </div>
         ))}
       </div>
@@ -215,71 +238,69 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
 
-  // Cuộn xuống cuối khi có tin mới
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [list]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [list]);
 
   const send = async () => {
     if (!msg.trim()) return;
-    
     const userMsg = msg;
     setMsg("");
     setList(prev => [...prev, {role: "user", text: userMsg}]);
     setLoading(true);
 
     try {
-      // THAY apiKey CỦA BẠN VÀO ĐÂY (Trong file App.jsx bạn gửi chưa có key thật)
+      // DÁN API KEY CỦA BẠN VÀO ĐÂY ĐỂ AI HOẠT ĐỘNG
       const apiKey = ""; 
+      if(!apiKey) throw new Error("Vui lòng dán Gemini API Key vào code!");
+
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          contents: [{ parts: [{ text: "Bạn là trợ lý ảo hỗ trợ môn Giáo dục quốc phòng và an ninh. Hãy trả lời ngắn gọn, chính xác: " + userMsg }] }]
+          contents: [{ parts: [{ text: "Hãy đóng vai một giáo viên GDQP, trả lời học sinh ngắn gọn câu hỏi sau: " + userMsg }] }]
         })
       });
 
       const data = await res.json();
-      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Xin lỗi, AI đang bận. Vui lòng thử lại sau.";
-      
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "AI không phản hồi.";
       setList(prev => [...prev, {role: "ai", text: aiResponse}]);
     } catch (err) {
-      setList(prev => [...prev, {role: "ai", text: "Lỗi kết nối AI. Kiểm tra API Key!"}]);
+      setList(prev => [...prev, {role: "ai", text: "Lỗi: " + err.message}]);
     }
     setLoading(false);
   };
 
   return (
-    <div className="bg-white rounded-[32px] shadow-sm border h-[500px] flex flex-col overflow-hidden">
-      <div className="bg-emerald-50 p-4 border-b flex items-center gap-3">
-        <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold">AI</div>
+    <div className="bg-white rounded-[40px] shadow-sm border h-[550px] flex flex-col overflow-hidden max-w-2xl mx-auto">
+      <div className="bg-emerald-900 p-5 flex items-center gap-3 text-white">
+        <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center text-xl">🤖</div>
         <div>
-          <h4 className="font-bold text-emerald-900 text-sm">Trợ lý GDQP</h4>
-          <p className="text-[10px] text-emerald-600">Đang trực tuyến</p>
+          <h4 className="font-bold text-sm">TRỢ LÝ AI GDQP</h4>
+          <p className="text-[10px] text-emerald-300">Sẵn sàng giải đáp 24/7</p>
         </div>
       </div>
 
-      <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
+      <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-50/50">
+        {list.length === 0 && <div className="text-center text-slate-400 text-xs py-20">Hãy đặt câu hỏi về kiến thức Quốc phòng...</div>}
         {list.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`}>
+            <div className={`max-w-[85%] p-4 rounded-3xl text-sm shadow-sm ${m.role === 'user' ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'}`}>
               {m.text}
             </div>
           </div>
         ))}
-        {loading && <div className="text-xs text-slate-400 italic">AI đang suy nghĩ...</div>}
+        {loading && <div className="text-[10px] text-emerald-600 font-bold animate-pulse">AI ĐANG SUY NGHĨ...</div>}
         <div ref={endRef} />
       </div>
 
-      <div className="p-4 border-t flex gap-2">
+      <div className="p-4 bg-white border-t flex gap-2">
         <input 
           value={msg} 
           onChange={e => setMsg(e.target.value)} 
           onKeyPress={e => e.key === 'Enter' && send()}
-          placeholder="Hỏi về vũ khí, đội ngũ, luật QP..." 
-          className="flex-grow bg-slate-50 border-none p-3 rounded-xl outline-none text-sm focus:ring-2 focus:ring-emerald-500 transition-all"
+          placeholder="Hỏi AI bất cứ điều gì..." 
+          className="flex-grow bg-slate-100 p-4 rounded-2xl outline-none text-sm focus:ring-2 focus:ring-emerald-500 transition-all"
         />
-        <button onClick={send} disabled={loading} className="bg-emerald-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50">GỬI</button>
+        <button onClick={send} disabled={loading} className="bg-emerald-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-emerald-800 disabled:opacity-50 transition-all shadow-md">GỬI</button>
       </div>
     </div>
   );
