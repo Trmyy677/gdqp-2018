@@ -42,17 +42,21 @@ const { useState, useEffect, useRef } = React;
 /* ================= FIREBASE CONFIG ================= */
 /* 🔥 DÁN CONFIG CỦA BẠN VÀO ĐÂY */
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_ID",
-  storageBucket: "YOUR_BUCKET",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAAW6F6Em3epelKBgs87_tTp7lFp_jJx5A",
+  authDomain: "gdqp-2018.firebaseapp.com",
+  projectId: "gdqp-2018",
+  storageBucket: "gdqp-2018.firebasestorage.app",
+  messagingSenderId: "926682253482",
+  appId: "1:926682253482:web:49b5f8652d3e6f4e2e28d3",
+  measurementId: "G-FWR66N32S7"
 };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
+
+  
 
 /* ================= APP ================= */
 
@@ -159,7 +163,7 @@ const Chat = () => {
   const [list,setList]=useState([]);
 
   const send = async ()=>{
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_GEMINI_KEY",{
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyxxxxxxx",{
       method:"POST",
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
