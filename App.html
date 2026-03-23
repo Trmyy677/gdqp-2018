@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GDQP&AN PRO</title>
+
+  <!-- React -->
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel -->
+
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind -->
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase -->
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+</head>
+
+<body class="bg-slate-100">
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState, useEffect, useRef } = React;
+
+/* ================= FIREBASE CONFIG ================= */
+/* 🔥 DÁN CONFIG CỦA BẠN VÀO ĐÂY */
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID",
+  storageBucket: "YOUR_BUCKET",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+/* ================= APP ================= */
+
+const App = () => {
+
+  const [user, setUser] = useState(null);
+  const [tab, setTab] = useState("home");
+
+  useEffect(() => {
+    auth.onAuthStateChanged(u => setUser(u));
+  }, []);
+
+  const isAdmin = user?.email === "admin@gmail.com";
+
+  return (
+    <div>
+      <header className="bg-emerald-900 text-white p-4 flex justify-between">
+        <h1 className="font-bold">GDQP&AN PRO</h1>
+        <div className="flex gap-3">
+          <button onClick={()=>setTab("home")}>Home</button>
+          <button onClick={()=>setTab("files")}>Tài liệu</button>
+          <button onClick={()=>setTab("chat")}>AI</button>
+        </div>
+      </header>
+
+      <div className="p-6">
+        {tab==="home" && <h2>Trang chủ</h2>}
+        {tab==="files" && <Files isAdmin={isAdmin}/>}
+        {tab==="chat" && <Chat/>}
+      </div>
+
+      {!user && <Login/>}
+    </div>
+  );
+};
+
+/* ================= LOGIN ================= */
+
+const Login = () => {
+  const [email,setEmail]=useState("");
+  const [pass,setPass]=useState("");
+
+  const login = async ()=>{
+    try{
+      await auth.signInWithEmailAndPassword(email,pass);
+    }catch(e){ alert("Sai tài khoản"); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-xl">
+        <h2 className="mb-4 font-bold">Đăng nhập</h2>
+        <input placeholder="email" onChange={e=>setEmail(e.target.value)} className="border p-2 mb-2 w-full"/>
+        <input type="password" placeholder="pass" onChange={e=>setPass(e.target.value)} className="border p-2 mb-2 w-full"/>
+        <button onClick={login} className="bg-emerald-600 text-white px-4 py-2">Login</button>
+      </div>
+    </div>
+  );
+};
+
+/* ================= FILE UPLOAD ================= */
+
+const Files = ({isAdmin}) => {
+  const [files,setFiles]=useState([]);
+
+  useEffect(()=>{
+    db.collection("files").onSnapshot(snap=>{
+      setFiles(snap.docs.map(d=>({...d.data(),id:d.id})));
+    });
+  },[]);
+
+  const upload = async (e)=>{
+    const file=e.target.files[0];
+    const ref = storage.ref("files/"+file.name);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+
+    await db.collection("files").add({
+      name:file.name,
+      url
+    });
+  };
+
+  return (
+    <div>
+      {isAdmin && <input type="file" onChange={upload}/>}
+
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        {files.map(f=>(
+          <div key={f.id} className="bg-white p-4 rounded">
+            <p>{f.name}</p>
+            <a href={f.url} target="_blank">Tải</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ================= CHAT ================= */
+
+const Chat = () => {
+  const [msg,setMsg]=useState("");
+  const [list,setList]=useState([]);
+
+  const send = async ()=>{
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_GEMINI_KEY",{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{parts:[{text:msg}]}]
+      })
+    });
+
+    const data = await res.json();
+
+    setList([...list,
+      {role:"user",text:msg},
+      {role:"ai",text:data.candidates?.[0]?.content?.parts?.[0]?.text}
+    ]);
+
+    setMsg("");
+  };
+
+  return (
+    <div>
+      <div className="h-64 overflow-auto bg-white p-4 mb-2">
+        {list.map((m,i)=><div key={i}><b>{m.role}:</b> {m.text}</div>)}
+      </div>
+      <input value={msg} onChange={e=>setMsg(e.target.value)} className="border p-2 w-full"/>
+      <button onClick={send} className="bg-blue-500 text-white px-4 py-2 mt-2">Gửi</button>
+    </div>
+  );
+};
+
+/* ================= RENDER ================= */
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+</script>
+
+</body>
+</html>
